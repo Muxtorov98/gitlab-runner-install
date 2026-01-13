@@ -1,48 +1,68 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🚀 GitLab Runner install / update (system-mode)"
+echo "🚀 Running install_user.sh inside CI runner"
 
-# 1. SUDO CHECK
-if [[ "$EUID" -ne 0 ]]; then
-  echo "❌ Please run with sudo"
-  exit 1
-fi
+# =========================
+# 1. Validate env vars
+# =========================
+: "${RUNNER_HOSTNAME:?Missing RUNNER_HOSTNAME}"
+: "${RUNNER_USER:?Missing RUNNER_USER}"
+: "${RUNNER_IP:?Missing RUNNER_IP}"
 
-# 2. DOWNLOAD / UPDATE BINARY
-echo "⬇️ Downloading GitLab Runner binary..."
-curl -L --output /usr/local/bin/gitlab-runner \
-  https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+# =========================
+# 2. Show where we are
+# =========================
+echo "🖥 Hostname : $RUNNER_HOSTNAME"
+echo "👤 User     : $RUNNER_USER"
+echo "📂 PWD      : $RUNNER_PWD"
+echo "🌐 IP       : $RUNNER_IP"
+echo "🕒 Date     : $RUNNER_DATE"
+echo "📦 Project  : $CI_PROJECT_PATH_EX"
+echo "🔀 Branch   : $CI_BRANCH_EX"
+echo "🆔 Pipeline : $CI_PIPELINE_EX"
 
-chmod +x /usr/local/bin/gitlab-runner
+# =========================
+# 3. Create proof folder
+# =========================
+TEST_DIR="/tmp/ci-proof"
+mkdir -p "$TEST_DIR"
 
-# 3. CREATE USER IF NEEDED
-if ! id gitlab-runner &>/dev/null; then
-  echo "👤 Creating gitlab-runner user..."
-  useradd --comment 'GitLab Runner' --create-home --shell /bin/bash gitlab-runner
+cat <<EOF > "$TEST_DIR/runner-info.txt"
+Hostname : $RUNNER_HOSTNAME
+User     : $RUNNER_USER
+IP       : $RUNNER_IP
+PWD      : $RUNNER_PWD
+Date     : $RUNNER_DATE
+Project  : $CI_PROJECT_PATH_EX
+Branch   : $CI_BRANCH_EX
+Pipeline : $CI_PIPELINE_EX
+EOF
+
+echo "✅ Proof file created: $TEST_DIR/runner-info.txt"
+
+# =========================
+# 4. Telegram notify (optional)
+# =========================
+if [[ -n "$TELEGRAM_BOT_TOKEN" && -n "$TELEGRAM_CHAT_ID" ]]; then
+  MESSAGE="🧪 *CI RUNNER CONFIRMED*
+
+🖥 Host: $RUNNER_HOSTNAME
+👤 User: $RUNNER_USER
+🌐 IP: $RUNNER_IP
+📦 Project: $CI_PROJECT_PATH_EX
+🔀 Branch: $CI_BRANCH_EX
+🆔 Pipeline: $CI_PIPELINE_EX
+"
+
+  curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+    -d chat_id="${TELEGRAM_CHAT_ID}" \
+    -d parse_mode="Markdown" \
+    --data-urlencode text="$MESSAGE"
+
+  echo "📨 Telegram notification sent"
 else
-  echo "👤 gitlab-runner user already exists"
+  echo "ℹ️ Telegram vars not set, skipping notify"
 fi
 
-# 4. INSTALL SERVICE IF NOT EXISTS
-if [[ ! -f /etc/systemd/system/gitlab-runner.service ]]; then
-  echo "⚙️ Installing GitLab Runner system service..."
-  gitlab-runner install \
-    --user=gitlab-runner \
-    --working-directory=/home/gitlab-runner
-else
-  echo "⚙️ GitLab Runner service already installed"
-fi
-
-# 5. ENABLE + START
-echo "▶️ Enabling & starting GitLab Runner..."
-systemctl enable gitlab-runner
-systemctl restart gitlab-runner
-
-# 6. STATUS
-echo "📊 GitLab Runner status:"
-systemctl status gitlab-runner --no-pager
-
-echo "✅ Done!"
-echo "👉 Next step (if not registered yet):"
-echo "   sudo gitlab-runner register"
+echo "🎉 install_user.sh finished successfully"
