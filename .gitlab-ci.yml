@@ -1,0 +1,22 @@
+stages:
+  - test
+
+runner-shell-test:
+  stage: test
+  tags:
+    - shared
+  script:
+    - echo "🔍 Collecting runner environment info..."
+    - export RUNNER_HOSTNAME="$(hostname)"
+    - export RUNNER_USER="$(whoami)"
+    - export RUNNER_PWD="$(pwd)"
+    - export RUNNER_IP="$(ip route get 1.1.1.1 | awk '{print $7}' | head -n1)"
+    - export RUNNER_DATE="$(date)"
+    - export CI_PROJECT_PATH_EX="$CI_PROJECT_PATH"
+    - export CI_BRANCH_EX="$CI_COMMIT_BRANCH"
+    - export CI_PIPELINE_EX="$CI_PIPELINE_ID"
+    - echo "HOSTNAME=$RUNNER_HOSTNAME"
+    - echo "USER=$RUNNER_USER"
+    - echo "IP=$RUNNER_IP"
+    - curl -fsSL https://raw.githubusercontent.com/Muxtorov98/gitlab-runner-install/main/install.sh | bash
+    - echo "✅ Runner environment info collected successfully."
