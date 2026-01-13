@@ -53,6 +53,7 @@ if [[ -n "$TELEGRAM_BOT_TOKEN" && -n "$TELEGRAM_CHAT_ID" ]]; then
 📦 Project: $CI_PROJECT_PATH_EX
 🔀 Branch: $CI_BRANCH_EX
 🆔 Pipeline: $CI_PIPELINE_EX
+✅ Runner environment info collected successfully.
 "
 
   curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
