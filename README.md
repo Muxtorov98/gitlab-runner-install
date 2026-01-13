@@ -1,3 +1,3 @@
 # gitlab-runner-install
 ```bash
-curl -fsSL https://github.com/Muxtorov98/gitlab-runner-install/blob/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/Muxtorov98/gitlab-runner-install/main/install.sh | sudo bash
