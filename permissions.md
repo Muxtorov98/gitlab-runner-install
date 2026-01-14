@@ -54,7 +54,7 @@ sudo chown -R user:deploy /var/www/app
 # 4-qadam: Permission sozlash
 
 ```bash
-sudo chmod -R 775 /var/www/hub.bts.uz
+sudo chmod -R 775 /var/www/app
 ```
 
 ## Bu nimani anglatadi:
